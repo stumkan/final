@@ -1,0 +1,95 @@
+
+{% extends "nms/layout.html" %}
+
+
+{% block body %}
+
+<h2>Fiber Network Management</h2>
+
+<div id="app">
+
+    <button class="btn btn-sm btn-outline-primary" id="active">Active Faults</button>
+    <button class="btn btn-sm btn-outline-primary" id="resolved">Resolved Faults</button>
+    <button class="btn btn-sm btn-outline-primary" id="notes">My Notes</button>
+    <button class="btn btn-sm btn-outline-primary" id="create">Create Ticket</button>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'logout' %}">Log Out</a>
+    <hr>
+
+    <div id="tickets-view"></div>
+
+    <div id="create-ticket-view"  data-user-id="{{ user_id }}">
+
+
+    
+        <div class="container mt-5">
+            <h2>Create Ticket</h2>
+            <form id="ticket-form">
+                <div class="mb-3">
+                    <label for="fault_start" class="form-label">Fault Start</label>
+                    <input type="datetime-local" class="form-control" id="fault_start" required>
+                </div>
+                <div class="mb-3">
+                    <label for="fault_end" class="form-label">Fault End</label>
+                    <input type="datetime-local" class="form-control" id="fault_end">
+                </div>
+
+                <div class="mb-3">
+                    <label for="fault_type" class="form-label">Fault Type</label>
+                    <select id="fault_type" class="form-select" required>
+                        <option value="">Select Fault Type</option>
+                        {% for fault_type in fault_types %}
+                        <option value="{{ fault_type.id }}">{{ fault_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="region" class="form-label">Region</label>
+                    <select id="region" class="form-select" required>
+                        <option value="">Select Region</option>
+                        {% for region in regions %}
+                        <option value="{{ region.id }}">{{ region.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="site_A" class="form-label">Site A</label>
+                    <select id="site_A" class="form-select" required>
+                        <option value="">Select Site A</option>
+                        {% for site in sites %}
+                        <option value="{{ site.id }}">{{ site.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="site_B" class="form-label">Site B</label>
+                    <select id="site_B" class="form-select">
+                        <option value="">Select Site B</option>
+                        {% for site in sites %}
+                        <option value="{{ site.id }}">{{ site.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3"></div>
+                <label for="ticket_status" class="form-label">Fault Status</label>
+                <select id="ticket_status" class="form-select">
+                    <option value="">Fault Status</option>
+                    {% for status in ticket_status %}
+                    <option value="{{ status.id }}">{{ status.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+                <div class="mb-3">
+                    <label for="summary" class="form-label">Summary</label>
+                    <textarea class="form-control" id="summary" rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
