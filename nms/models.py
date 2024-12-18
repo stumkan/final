@@ -64,6 +64,20 @@ class Ticket(models.Model):
         else:
             return f"{self.fault_type.name} at {self.site_A.name}, started at {self.fault_start}. Status : {self.status.name}"
 
+    def serialize(self):
+            return {
+                "id": self.id,
+                "fault_start": self.fault_start,
+                "fault_end": self.fault_end,
+                "summary": self.summary,
+                "status": self.status.name if self.status else None,
+                "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "assigned_to": self.assigned_to.username if self.assigned_to else None,
+                "fault_type": self.fault_type.name if self.fault_type else None,
+                "region": self.region.name if self.region else None,
+                "site_A": self.site_A.name if self.site_A else None,
+                "site_B": self.site_B.name if self.site_B else None,
+            }
 
 class Comment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='comments')

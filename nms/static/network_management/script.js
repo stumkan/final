@@ -84,7 +84,7 @@
         });
     }
 
-  function load_tickets(ticketbox) {
+  function load_tickets2(ticketbox) {
         // Show the mailbox and hide other views
         document.querySelector('#tickets-view').style.display = 'block';
         document.querySelector('#create-ticket-view').style.display = 'none';
@@ -126,4 +126,68 @@
           });
       }
 
-         
+  function load_tickets(ticketbox) {
+    // Show the tickets view and hide other views
+    document.querySelector('#tickets-view').style.display = 'block';
+    document.querySelector('#create-ticket-view').style.display = 'none';
+
+    // Clear the tickets view and display the title
+    const ticketsView = document.querySelector('#tickets-view');
+    ticketsView.innerHTML = `<h3>${ticketbox.charAt(0).toUpperCase() + ticketbox.slice(1)} Tickets</h3>`;
+    ticketsView.innerHTML += `<p>Loading tickets...</p>`; // Loading message
+
+    // Fetch tickets from the API
+    fetch(`/tickets/${ticketbox}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            ticketsView.innerHTML = ''; // Clear loading message
+            const tickets = data.tickets;
+
+            if (tickets.length === 0) {
+                ticketsView.innerHTML += `<p>No ${ticketbox} tickets available.</p>`;
+            } else {
+                tickets.forEach(ticket => {
+                    // Format dates
+                    const formatDate = date => new Intl.DateTimeFormat('en-US', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                    }).format(new Date(date));
+
+                    // Create a ticket element and append it to the view
+                    const ticketElement = document.createElement('div');
+                    ticketElement.classList.add('ticket');
+                    ticketElement.innerHTML = `
+                        <div class="ticket-item">
+                            <span>${ticket.fault_type}</span>
+                            <span> in the ${ticket.region} Region </span>
+                            <span>between ${ticket.site_A}</span>
+                            ${
+                                ticket.site_B
+                                    ? `<span>and ${ticket.site_B}: </span>`
+                                    : ''
+                            }
+                            <span>Start time: ${formatDate(ticket.fault_start)}</span>
+                        </div>
+                        <hr>`;
+
+                    // Add a click event to view the email
+                    ticketElement.addEventListener('click', () => view_ticket(ticket.id)); 
+
+                    ticketsView.appendChild(ticketElement);
+
+                    ticketElement.addEventListener('click', () => view_ticket(ticket.id)); 
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Error loading tickets:", error);
+            ticketsView.innerHTML = `<p class="error">Could not load ${ticketbox} tickets. Please try again later.</p>`;
+        });
+}
+
+    

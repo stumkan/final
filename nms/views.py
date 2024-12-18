@@ -12,9 +12,37 @@ from .models import Ticket, Region, FaultType, Site, User, TicketStatus
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 
 import json
 from datetime import datetime
+
+def get_ticket_detail(request, ticket_id):
+    try:
+        ticket = Ticket.objects.get(id=ticket_id)
+        return JsonResponse(ticket.serialize())
+    except Ticket.DoesNotExist:
+        return JsonResponse({"error": "Ticket not found"}, status=404)
+
+
+def active_and_outstanding_tickets(request):
+    # Fetch tickets with status 'active' or 'outstanding'
+    tickets = Ticket.objects.filter(status__name__in=['active', 'outstanding'])
+    # tickets = Ticket.objects.filter(status__name__in=['active'])
+    # tickets = Ticket.objects.filter()
+
+    # print("tickets")
+    # print(tickets )
+
+
+    # Serialize tickets using the model's serialize method
+    serialized_tickets = [ticket.serialize() for ticket in tickets]
+
+    print("serialized_tickets")
+    print(serialized_tickets )
+
+    # Return the serialized data as JSON
+    return JsonResponse({'tickets': serialized_tickets})
 
 
 @csrf_exempt 
