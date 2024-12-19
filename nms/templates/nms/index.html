@@ -8,8 +8,8 @@
 
 <div id="app">
 
-    <button class="btn btn-sm btn-outline-primary" id="active">Active Faults</button>
-    <button class="btn btn-sm btn-outline-primary" id="resolved">Resolved Faults</button>
+    <button class="btn btn-sm btn-outline-primary" id="open">Open Faults</button>
+    <button class="btn btn-sm btn-outline-primary" id="closed">Closed Faults</button>
     <button class="btn btn-sm btn-outline-primary" id="notes">My Notes</button>
     <button class="btn btn-sm btn-outline-primary" id="create">Create Ticket</button>
     <a class="btn btn-sm btn-outline-primary" href="{% url 'logout' %}">Log Out</a>
@@ -17,10 +17,8 @@
 
     <div id="tickets-view"></div>
 
-    <div id="create-ticket-view"  data-user-id="{{ user_id }}">
+    <div id="create-ticket-view" >
 
-
-    
         <div class="container mt-5">
             <h2>Create Ticket</h2>
             <form id="ticket-form">
@@ -80,11 +78,10 @@
                 </select>
             </div>
 
-
-                <div class="mb-3">
-                    <label for="summary" class="form-label">Summary</label>
-                    <textarea class="form-control" id="summary" rows="3"></textarea>
-                </div>
+            <div class="mb-3">
+                <label for="summary" class="form-label">Summary</label>
+                <textarea class="form-control" id="summary" rows="3"></textarea>
+            </div>
                 
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>

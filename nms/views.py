@@ -1,4 +1,3 @@
-from django.shortcuts import render
 
 # Create your views here.
 from django.contrib.auth import authenticate, login, logout
@@ -8,7 +7,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib import messages
 
-from .models import Ticket, Region, FaultType, Site, User, TicketStatus
+from .models import Ticket, Region, FaultType, Site, User, TicketStatus, Comment
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -17,6 +16,98 @@ from django.views.decorators.http import require_GET
 import json
 from datetime import datetime
 
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+
+
+
+@csrf_exempt
+def update_ticket(request, ticket_id):
+    if request.method == "POST":
+        try:
+            # Parse JSON data from the request body
+            data = json.loads(request.body)
+
+            # Retrieve the ticket to update
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+
+            # Update fields with the provided data
+            ticket.fault_start = data.get('fault_start', ticket.fault_start)
+            ticket.fault_end = data.get('fault_end', ticket.fault_end)
+            ticket.summary = data.get('summary', ticket.summary)
+            ticket.status = get_object_or_404(TicketStatus, id=data.get('status', ticket.status.id))
+            ticket.assigned_to = get_object_or_404(User, id=data.get('assigned_to', ticket.assigned_to.id)) if data.get('assigned_to') else None
+            ticket.fault_type = get_object_or_404(FaultType, id=data.get('fault_type', ticket.fault_type.id)) if data.get('fault_type') else None
+            ticket.region = get_object_or_404(Region, id=data.get('region', ticket.region.id)) if data.get('region') else None
+            ticket.site_A = get_object_or_404(Site, id=data.get('site_A', ticket.site_A.id)) if data.get('site_A') else None
+            ticket.site_B = get_object_or_404(Site, id=data.get('site_B', ticket.site_B.id)) if data.get('site_B') else None
+
+            # Save the updated ticket
+            ticket.save()
+
+            return JsonResponse({'message': 'Ticket updated successfully'}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+
+@csrf_exempt
+def update_tickets(request, ticket_id):
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+
+            ticket.fault_start = data.get('fault_start', ticket.fault_start)
+            ticket.fault_end = data.get('fault_end', ticket.fault_end)
+            ticket.summary = data.get('summary', ticket.summary)
+            ticket.status = get_object_or_404(TicketStatus, id=data.get('status', ticket.status.id))
+            ticket.assigned_to = get_object_or_404(User, id=data.get('assigned_to', ticket.assigned_to.id)) if data.get('assigned_to') else None
+            ticket.fault_type = get_object_or_404(FaultType, id=data.get('fault_type', ticket.fault_type.id))
+            ticket.region = get_object_or_404(Region, id=data.get('region', ticket.region.id))
+            ticket.site_A = get_object_or_404(Site, id=data.get('site_A', ticket.site_A.id))
+            ticket.site_B = get_object_or_404(Site, id=data.get('site_B', ticket.site_B.id)) if data.get('site_B') else None
+
+            ticket.save()
+            return JsonResponse({'message': 'Ticket updated successfully!'}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+def add_comment(request, ticket_id):
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        content = request.POST.get('content')
+        Comment.objects.create(ticket=ticket, user=request.user, content=content)
+        return HttpResponseRedirect(reverse('view_ticket', args=[ticket_id]))
+
+
+def view_ticket(request, ticket_id):
+    # Fetch the ticket and its comments
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    comments = ticket.comments.select_related('user').order_by('-created_date')
+
+    statuses = TicketStatus.objects.all()
+    fault_types = FaultType.objects.all()
+    regions = Region.objects.all()
+    sites = Site.objects.all()
+    users = User.objects.all()
+
+
+    return render(request, 'nms/view_ticket.html', {
+        'ticket': ticket,
+        'statuses': statuses,
+        'fault_types': fault_types,
+        'regions': regions,
+        'sites': sites,
+        'users': users,
+        'comments': comments
+    })
+
+
 def get_ticket_detail(request, ticket_id):
     try:
         ticket = Ticket.objects.get(id=ticket_id)
@@ -24,22 +115,21 @@ def get_ticket_detail(request, ticket_id):
     except Ticket.DoesNotExist:
         return JsonResponse({"error": "Ticket not found"}, status=404)
 
+@login_required
+def load_ticket_box(request, ticket_box):
 
-def active_and_outstanding_tickets(request):
-    # Fetch tickets with status 'active' or 'outstanding'
-    tickets = Ticket.objects.filter(status__name__in=['active', 'outstanding'])
-    # tickets = Ticket.objects.filter(status__name__in=['active'])
-    # tickets = Ticket.objects.filter()
+    # Filter emails returned based on mailbox
+    if ticket_box == "open":
+        tickets = Ticket.objects.filter(status__name__in=['active', 'outstanding', 'canceled']).order_by('-created_at')
 
-    # print("tickets")
-    # print(tickets )
+    elif ticket_box == "closed":
+        tickets = Ticket.objects.filter(status__name__in=['closed']).order_by('-created_at')
 
+    else:
+        return JsonResponse({"error": "Invalid ticketbox."}, status=400)
 
     # Serialize tickets using the model's serialize method
     serialized_tickets = [ticket.serialize() for ticket in tickets]
-
-    print("serialized_tickets")
-    print(serialized_tickets )
 
     # Return the serialized data as JSON
     return JsonResponse({'tickets': serialized_tickets})

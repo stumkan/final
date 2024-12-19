@@ -14,13 +14,13 @@
         }
 
         // Use buttons to toggle between views
-        document.querySelector('#active').addEventListener('click', () => load_tickets('active'));
-        document.querySelector('#resolved').addEventListener('click', () => load_tickets('resolved'));
+        document.querySelector('#open').addEventListener('click', () => load_tickets('open'));
+        document.querySelector('#closed').addEventListener('click', () => load_tickets('closed'));
         document.querySelector('#notes').addEventListener('click', () => load_tickets('notes'));
         document.querySelector('#create').addEventListener('click', create_ticket);
 
         // By default, load the inbox
-        load_tickets('active');
+        load_tickets('open');
     });
     
     function create_ticket()  {
@@ -28,7 +28,7 @@
       document.querySelector('#fault_start').value = "",
       document.querySelector('#fault_end').value = "",
       document.querySelector('#summary').value = "",
-      document.getElementById('resolved').checked = false,
+    //   document.getElementById('resolved').checked = false,
       document.querySelector('#fault_type').value = "",
       document.querySelector('#region').value = "",
       document.querySelector('#site_A').value = "",
@@ -46,7 +46,7 @@
                 fault_start: document.querySelector('#fault_start').value,
                 fault_end: document.querySelector('#fault_end').value,
                 summary: document.querySelector('#summary').value,
-                resolved: document.querySelector('#resolved').checked ? true : false,
+
                 fault_type: document.querySelector('#fault_type').value,
                 region: document.querySelector('#region').value,
                 site_A: document.querySelector('#site_A').value,
@@ -71,7 +71,7 @@
               if (response.ok) {
                   const data = await response.json();
                   alert('Ticket created successfully! Ticket ID: ' + data.ticket_id);
-                  load_tickets('active');
+                  load_tickets('open');
               } else {
                   const error = await response.json();
                   alert('Error: ' + error.error);
@@ -84,60 +84,19 @@
         });
     }
 
-  function load_tickets2(ticketbox) {
-        // Show the mailbox and hide other views
-        document.querySelector('#tickets-view').style.display = 'block';
-        document.querySelector('#create-ticket-view').style.display = 'none';
-      
-        // Clear the emails view and show the mailbox name
-        const ticketsView = document.querySelector('#tickets-view');
-        ticketsView.innerHTML = `<h3>${ticketbox.charAt(0).toUpperCase() + ticketbox.slice(1)}</h3>`;
-      
-        // Fetch the emails for the specified mailbox
-        fetch(`/tickets/${ticketbox}`)
-          .then(response => response.json())
-          .then(tickets => {
-            // Loop through emails and display each email
-            tickets.forEach(ticket => {
-              // Create a container for the email
-              const ticketlDiv = document.createElement('div');
-            //   ticketlDiv.className = 'ticket';
-            //   ticketlDiv.classList.add(ticket.read ? 'read' : 'unread');
-      
-              // Add email details
-              ticketlDiv.innerHTML = `
-                <span class="email-sender-subject">
-                <span class="email-sender">${ticket.created_date} </span> 
-                <span class="email-subject">${ticket.fault_start} </span> 
-                </span> 
-                <span class="email-timestamp"> ${ticket.fault_start} </span> 
-              `;
-      
-              // Add a click event to view the email
-            //   ticketlDiv.addEventListener('click', () => view_email(ticket.id, mailbox));
-      
-              // Append the email to the emails view
-              ticketsView.appendChild(ticketlDiv);
-            });
-          })
-          .catch(error => {
-            console.error('Error fetching tickets:', error);
-            ticketsView.innerHTML += `<p class="emailload-error">Failed to load tickets. Please try again later.</p>`;
-          });
-      }
 
-  function load_tickets(ticketbox) {
+  function load_tickets(ticket_box) {
     // Show the tickets view and hide other views
     document.querySelector('#tickets-view').style.display = 'block';
     document.querySelector('#create-ticket-view').style.display = 'none';
 
     // Clear the tickets view and display the title
     const ticketsView = document.querySelector('#tickets-view');
-    ticketsView.innerHTML = `<h3>${ticketbox.charAt(0).toUpperCase() + ticketbox.slice(1)} Tickets</h3>`;
+    ticketsView.innerHTML = `<h3>${ticket_box.charAt(0).toUpperCase() + ticket_box.slice(1)} Tickets</h3>`;
     ticketsView.innerHTML += `<p>Loading tickets...</p>`; // Loading message
 
     // Fetch tickets from the API
-    fetch(`/tickets/${ticketbox}/`)
+    fetch(`/tickets/${ticket_box}/`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Error: ${response.status} ${response.statusText}`);
@@ -162,7 +121,9 @@
                     const ticketElement = document.createElement('div');
                     ticketElement.classList.add('ticket');
                     ticketElement.innerHTML = `
+                    <a href="/tickets/${ticket.id}/details/" class="ticket-link">
                         <div class="ticket-item">
+                            <span>Ref:${ticket.id} |</span>
                             <span>${ticket.fault_type}</span>
                             <span> in the ${ticket.region} Region </span>
                             <span>between ${ticket.site_A}</span>
@@ -171,23 +132,134 @@
                                     ? `<span>and ${ticket.site_B}: </span>`
                                     : ''
                             }
-                            <span>Start time: ${formatDate(ticket.fault_start)}</span>
+                            <span>| Start time: ${formatDate(ticket.fault_start)}</span>
                         </div>
+                         </a>
                         <hr>`;
 
                     // Add a click event to view the email
                     ticketElement.addEventListener('click', () => view_ticket(ticket.id)); 
 
                     ticketsView.appendChild(ticketElement);
-
-                    ticketElement.addEventListener('click', () => view_ticket(ticket.id)); 
                 });
             }
         })
         .catch(error => {
             console.error("Error loading tickets:", error);
-            ticketsView.innerHTML = `<p class="error">Could not load ${ticketbox} tickets. Please try again later.</p>`;
+            ticketsView.innerHTML = `<p class="error">Could not load ${ticket_box} tickets. Please try again later.</p>`;
         });
 }
 
-    
+function view_ticket(ticket_id) {
+
+  // Fetch ticket details
+  fetch(`/tickets/${ticket_id}`)
+      .then(response => {
+          if (!response.ok) {
+              throw new Error("Failed to fetch ticket details");
+          }
+          return response.json();
+      })
+      .then(ticket => {
+          const detailView = document.querySelector('#ticket-detail-view');
+          detailView.innerHTML = `
+              <h3>Ticket Details</h3>
+              <p><strong>Fault Type:</strong> ${ticket.fault_type || 'N/A'}</p>
+              <p><strong>Region:</strong> ${ticket.region || 'N/A'}</p>
+              <p><strong>Site A:</strong> ${ticket.site_A || 'N/A'}</p>
+              <p><strong>Site B:</strong> ${ticket.site_B || 'N/A'}</p>
+              <p><strong>Status:</strong> ${ticket.status}</p>
+              <p><strong>Fault Start:</strong> ${ticket.fault_start}</p>
+              <p><strong>Fault End:</strong> ${ticket.fault_end || 'Ongoing'}</p>
+              <p><strong>Summary:</strong> ${ticket.summary || 'No summary provided'}</p>
+
+              <h4>Comments</h4>
+              <div id="comments">
+                  ${ticket.comments.map(comment => `
+                      <div class="comment">
+                          <p><strong>${comment.user__username}:</strong> ${comment.content}</p>
+                          <p class="text-muted">${new Date(comment.created_date).toLocaleString()}</p>
+                      </div>
+                  `).join('')}
+              </div>
+
+              <textarea id="new-comment" placeholder="Add a comment" rows="3"></textarea>
+              <button id="add-comment-btn" class="btn btn-primary">Add Comment</button>
+          `;
+
+          // Add event listener for adding a comment
+          document.querySelector('#add-comment-btn').addEventListener('click', () => {
+              const content = document.querySelector('#new-comment').value;
+              if (content.trim() === "") {
+                  alert("Comment cannot be empty!");
+                  return;
+              }
+
+              fetch(`/tickets/${ticketId}/`, {
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json",
+                      "X-CSRFToken": getCookie('csrftoken'),
+                  },
+                  body: JSON.stringify({ content }),
+              })
+                  .then(response => {
+                      if (!response.ok) {
+                          throw new Error("Failed to add comment");
+                      }
+                      return response.json();
+                  })
+                  .then(data => {
+                      alert(data.message);
+                      view_ticket(ticketId); // Refresh ticket view
+                  })
+                  .catch(error => {
+                      console.error("Error adding comment:", error);
+                      alert("Could not add comment. Please try again later.");
+                  });
+          });
+      })
+      .catch(error => {
+          console.error("Error loading ticket details:", error);
+          document.querySelector('#ticket-detail-view').innerHTML = `<p class="error">Could not load ticket details. Please try again later.</p>`;
+      });
+}
+
+
+document.getElementById('update-ticket').addEventListener('click', async () => {
+
+    const ticket_id = parseInt(document.getElementById('ticket-container').value, 10);
+
+    const ticketData = {
+        
+        fault_start: document.getElementById('fault_start').value,
+        fault_end: document.getElementById('fault_end').value,
+        summary: document.getElementById('summary').value,
+        status: document.getElementById('status').value,
+        assigned_to: document.getElementById('assigned_to').value,
+        fault_type: document.getElementById('fault_type').value,
+        region: document.getElementById('region').value,
+        site_A: document.getElementById('site_A').value,
+        site_B: document.getElementById('site_B').value,
+    };
+
+    try {
+        const response = await fetch(`/tickets/${ticket_id}/update/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(ticketData),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert('Ticket updated successfully!');
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An unexpected error occurred.');
+    }
+});
