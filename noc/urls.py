@@ -17,7 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from repot.views import download_report
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('nms.urls'))
+    path('', include('nms.urls')),
+    path('download/report/', download_report, name='download_report'),
 ]
