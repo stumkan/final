@@ -16,7 +16,7 @@
         // Use buttons to toggle between views
         document.querySelector('#open').addEventListener('click', () => load_tickets('open'));
         document.querySelector('#closed').addEventListener('click', () => load_tickets('closed'));
-        document.querySelector('#notes').addEventListener('click', () => load_tickets('notes'));
+        document.querySelector('#notes').addEventListener('click', () => load_notes());
         document.querySelector('#create').addEventListener('click', create_ticket);
 
         // By default, load the inbox
@@ -38,6 +38,7 @@
         // Show the mailbox and hide other views
         document.querySelector('#tickets-view').style.display = 'none';
         document.querySelector('#create-ticket-view').style.display = 'block';
+        document.querySelector('#notes-view').style.display = 'none';
     
         document.getElementById('ticket-form').addEventListener('submit', async function (event) {
             event.preventDefault(); 
@@ -84,11 +85,79 @@
         });
     }
 
-
+    
+    // Function to load individual note detail
+    function load_note_detail(noteId) {
+        fetch(`/notes/${noteId}/`)
+            .then(response => response.text())
+            .then(html => {
+                document.querySelector('#notes-view').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading note detail:', error));
+    }
+    
+    function load_notes() {
+        // Show the notes view and hide other views
+        document.querySelector('#tickets-view').style.display = 'none';
+        document.querySelector('#create-ticket-view').style.display = 'none';
+        document.querySelector('#notes-view').style.display = 'block';
+    
+        // Clear the notes view and display the title
+        const notesView = document.querySelector('#notes-view');
+        notesView.innerHTML = `<h3>My Notes</h3>`; // Add the title
+        notesView.innerHTML += `<p>Loading notes...</p>`; // Loading message
+    
+        // Fetch notes from the API
+        fetch(`/notes/listnotes/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const notes = data.notes;
+    
+                // Clear previous content or loading message
+                notesView.innerHTML = `<h3>My Notes</h3>`; 
+                notesView.innerHTML +=` <a href="notes/create/" class="btn btn-success">Create Note</a> <hr>`; 
+    
+                if (notes.length === 0) {
+                    // If no notes, display a message
+                    notesView.innerHTML += `<p>No notes available.</p>`;
+                } else {
+                    notes.forEach(note => {
+    
+                        // Create a note element
+                        const noteElement = document.createElement('div');
+                        noteElement.classList.add('note', 'mb-3', 'p-3', 'border', 'rounded');
+                        noteElement.innerHTML = `
+                            <br>
+                            <a href="/notes/${note.id}/details/" class="note-link" style="text-decoration: none; color: inherit;">
+                                <div class="note-item">
+                                    <span><strong>Ref:</strong> ${note.id} | </span>
+                                    <span><strong>Title:</strong> ${note.title}</span>
+                                </div>
+                            </a>
+                        `;
+    
+                        // Append the note element to the view
+                        notesView.appendChild(noteElement);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error loading notes:", error);
+                notesView.innerHTML = `<p class="error">Could not load notes. Please try again later.</p>`;
+            });
+    }
+    
+    
   function load_tickets(ticket_box) {
     // Show the tickets view and hide other views
     document.querySelector('#tickets-view').style.display = 'block';
     document.querySelector('#create-ticket-view').style.display = 'none';
+    document.querySelector('#notes-view').style.display = 'none';
 
     // Clear the tickets view and display the title
     const ticketsView = document.querySelector('#tickets-view');
@@ -106,6 +175,7 @@
         .then(data => {
             ticketsView.innerHTML = ''; // Clear loading message
             const tickets = data.tickets;
+
 
             if (tickets.length === 0) {
                 ticketsView.innerHTML += `<p>No ${ticketbox} tickets available.</p>`;
@@ -129,17 +199,21 @@
                             <span>between ${ticket.site_A}</span>
                             ${
                                 ticket.site_B
-                                    ? `<span>and ${ticket.site_B}: </span>`
+                                    ? `<span>and ${ticket.site_B} </span>`
                                     : ''
                             }
-                            <span>| Start time: ${formatDate(ticket.fault_start)}</span>
+                            <span>| Started: ${formatDate(ticket.fault_start)}</span>
+                            ${
+                                ticket.fault_end
+                                    ? `<span>Ended: ${formatDate(ticket.fault_end)}: </span>`
+                                    : ''
+                            }          
                         </div>
                          </a>
-                        <hr>`;
+                        `;
 
                     // Add a click event to view the email
-                    ticketElement.addEventListener('click', () => view_ticket(ticket.id)); 
-
+                    // ticketElement.addEventListener('click', () => view_ticket(ticket.id)); 
                     ticketsView.appendChild(ticketElement);
                 });
             }
@@ -150,7 +224,7 @@
         });
 }
 
-function view_ticket(ticket_id) {
+function view_ticket2(ticket_id) {
 
   // Fetch ticket details
   fetch(`/tickets/${ticket_id}`)
@@ -263,3 +337,5 @@ document.getElementById('update-ticket').addEventListener('click', async () => {
         alert('An unexpected error occurred.');
     }
 });
+
+

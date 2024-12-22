@@ -1,3 +1,32 @@
+/* Notes styling */
+
+
+
+/* tickets styling */
+
+.ticket{
+    background-color: lightgrey;
+    padding: .5rem;
+    margin-top: .5rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.ticket-item{
+    text-decoration: none;
+}
+
+.ticket-item:active, .ticket-item:visited{
+    text-decoration: none;
+}
+
+.comment{
+    background-color: rgb(240, 240, 233);
+}
+
+
+/* pop up alerts */
+
 .alert {
     padding: 15px;
     margin-bottom: 20px;

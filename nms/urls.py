@@ -11,6 +11,12 @@ urlpatterns = [
     path('tickets/<int:ticket_id>/update/', views.update_ticket, name='update_ticket'),
 
 
+    path('notes/listnotes/', views.list_notes, name='notes_list'),
+    path('notes/<int:note_id>/details/', views.view_note, name='view_note'),
+    path('notes/create/', views.create_note, name='create_note'),
+    path('notes/<int:note_id>/edit/', views.edit_note, name='edit_note'),
+
+
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),
     path("register", views.register, name="register")

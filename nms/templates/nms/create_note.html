@@ -1,0 +1,19 @@
+{% extends "nms/layout.html" %}
+
+{% block body %}
+
+<h1>Create a New Note</h1>
+<form method="post" action="{% url 'create_note' %}">
+    {% csrf_token %}
+    <div>
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title" placeholder="Enter note title" required style="width: 100%;"><br><br>
+    </div>
+    <div>
+        <label for="content">Content:</label><br>
+        <textarea id="content" name="content" rows="10" cols="50" placeholder="Write in Markdown" required></textarea><br>
+    </div>
+    <button type="submit">Save Note</button>
+</form>
+
+{% endblock %}

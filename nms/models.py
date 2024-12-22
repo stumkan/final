@@ -82,8 +82,27 @@ class Ticket(models.Model):
 class Comment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
     content = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Comment by {self.user.username} on {self.ticket.title}"
+
+
+class Note(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notes')
+    title = models.CharField(max_length=100, default="No Title Provided")
+    content = models.TextField()  # Store the Markdown content
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Note by {self.user.username} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+    def serialize(self):
+            return {
+                "id": self.id,
+                "title": self.title,
+                "content": self.content,
+
+            }

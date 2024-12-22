@@ -3,11 +3,12 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
 
-from .models import Ticket, Region, FaultType, Site, User, TicketStatus, Comment
+from .models import Ticket, Region, FaultType, Site, User, TicketStatus, Comment, Note
+from markdown import markdown as md
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -20,7 +21,60 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
+@login_required
+def edit_note(request, note_id):
+    note = get_object_or_404(Note, id=note_id, user=request.user)
 
+    if request.method == 'POST':
+        note.title = request.POST.get('title')
+        note.content = request.POST.get('content')
+        note.save()
+        return redirect('view_note', note_id=note.id)  # Redirect to the view_note page for the edited note
+
+    return render(request, 'nms/edit_note.html', {'note': note})
+
+@login_required
+def create_note(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        Note.objects.create(user=request.user, title=title, content=content)
+        return redirect('list_notes')  # Redirect to the notes list after saving
+    return render(request, 'nms/create_note.html')
+
+def list_notes(request):
+    notes = Note.objects.filter(user=request.user).order_by('-created_at')
+
+    # Serialize tickets using the model's serialize method
+    serialized_notes = [note.serialize() for note in notes]
+
+    # Return the serialized data as JSON
+    return JsonResponse({'notes': serialized_notes})
+
+
+@login_required
+def create_note(request):
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        Note.objects.create(user=request.user, content=content)
+        return redirect('notes_list')  # Redirect to the list of notes
+
+    return render(request, 'nms/create_note.html')
+
+
+
+# @login_required
+# def view_note(request, note_id):
+#     note = get_object_or_404(Note, id=note_id, user=request.user)
+#     rendered_content = md(note.content, extensions=['markdown.extensions.extra', 'markdown.extensions.nl2br'])
+
+#     return render(request, 'nms/view_note.html', {'note': note, 'content': rendered_content})
+
+
+def view_note(request, note_id):
+    note = get_object_or_404(Note, id=note_id)
+    rendered_content = md(note.content, extensions=['extra', 'codehilite'])  # Render Markdown
+    return render(request, 'nms/view_note.html', {'note': note, 'rendered_content': rendered_content})
 
 @csrf_exempt
 def update_ticket(request, ticket_id):
@@ -72,7 +126,9 @@ def update_tickets(request, ticket_id):
             ticket.site_B = get_object_or_404(Site, id=data.get('site_B', ticket.site_B.id)) if data.get('site_B') else None
 
             ticket.save()
+            messages.success(request, "Ticket updated successfully!")
             return JsonResponse({'message': 'Ticket updated successfully!'}, status=200)
+            
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid request method'}, status=405)
@@ -114,6 +170,7 @@ def get_ticket_detail(request, ticket_id):
         return JsonResponse(ticket.serialize())
     except Ticket.DoesNotExist:
         return JsonResponse({"error": "Ticket not found"}, status=404)
+
 
 @login_required
 def load_ticket_box(request, ticket_box):
