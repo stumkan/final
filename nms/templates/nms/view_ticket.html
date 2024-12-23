@@ -5,7 +5,7 @@
 <div class="container mt-5">
     <h1 class="mb-4">Ticket Details</h1>
 
-    <h3 class="mb-4">Ref:{{ ticket.id }}</h3>
+    <h3 class="mb-4">REF:{{ ticket.id }}</h3>
 
     
     <form id="edit-ticket-form" class="row g-3" action="{% url 'update_ticket' ticket.id %}">
@@ -121,7 +121,6 @@
         <button type="submit" class="btn btn-success">Add Comment</button>
     </form>
 
-    <a href="/tickets/" class="btn btn-secondary mt-4">Back to Tickets</a>
 </div>
 
 {% endblock %}

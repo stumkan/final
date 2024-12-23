@@ -10,13 +10,21 @@
     <span>Written on {{ note.created_at }}</span>
     <hr>
     <a href="{% url 'edit_note' note.id %}" class="btn btn-success">Edit note</a> 
+    <br>
+    <br>
+    <br>
+    <br>
    
-    <h2>{{ note.title }}</h2>
+    <!-- <h2>{{ note.title }}</h2> -->
     <div>
         {{ rendered_content|safe }}
     </div>
 </div>
-<a class="btn btn-success">Back to Notes</a> 
+
+<br>
+<br>
+<br>
+
 
 
 {% endblock %}
