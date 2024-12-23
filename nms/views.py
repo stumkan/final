@@ -74,35 +74,30 @@ def list_notes(request):
     return JsonResponse({'notes': serialized_notes})
 
 
-@login_required
+@csrf_exempt
 def create_note(request):
+
     if request.method == 'POST':
-        content = request.POST.get('content')
-        Note.objects.create(user=request.user, content=content)
-        return redirect('notes_list')  # Redirect to the list of notes
+        try:
+            # Parse JSON payload
+            data = json.loads(request.body)
+            user = request.user
 
-    return render(request, 'nms/create_note.html')
+            # Create the Ticket
+            note = Note.objects.create(title=data.get('title'), content=data.get('content'), user=user,)
+            messages.success(request, "Note created successfully.")
+            return JsonResponse({'message': 'Note created successfully!', 'note_id': note.id}, status=201)
 
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-
-# @login_required
-# def view_note(request, note_id):
-#     note = get_object_or_404(Note, id=note_id, user=request.user)
-#     rendered_content = md(note.content, extensions=['markdown.extensions.extra', 'markdown.extensions.nl2br'])
-
-#     return render(request, 'nms/view_note.html', {'note': note, 'content': rendered_content})
-
-
+# @csrf_exempt 
 def view_note(request, note_id):
     note = get_object_or_404(Note, id=note_id)
     rendered_content = md(note.content, extensions=['extra', 'codehilite'])  # Render Markdown
     return render(request, 'nms/view_note.html', {'note': note, 'rendered_content': rendered_content})
 
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404
-import json
 
 @csrf_exempt
 def update_ticket(request, ticket_id):
@@ -154,49 +149,6 @@ def update_ticket(request, ticket_id):
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
-# @csrf_exempt
-# def update_ticket(request, ticket_id):
-#     if request.method == "POST":
-#         try:
-#             # Parse JSON data from the request body
-#             data = json.loads(request.body)
-
-#             # Retrieve the ticket to update
-#             ticket = get_object_or_404(Ticket, id=ticket_id)
-
-#             # print("print ticket")
-#             # print(ticket.id)
-#             # print(ticket.fault_start)
-#             # print(ticket.fault_end)
-#             # print(ticket.summary)
-#             # print(ticket.status)
-#             # print(ticket.assigned_to)
-#             # print(ticket.fault_type)
-#             # print(ticket.region)
-#             # print(ticket.site_A)
-#             # print(ticket.site_B)
-
-#             # Update fields with the provided data
-#             ticket.fault_start = data.get('fault_start', ticket.fault_start)
-#             ticket.fault_end = data.get('fault_end', ticket.fault_end)
-#             ticket.summary = data.get('summary', ticket.summary)
-#             ticket.status = get_object_or_404(TicketStatus, id=data.get('status', ticket.status.id))
-#             ticket.assigned_to = get_object_or_404(User, id=data.get('assigned_to', ticket.assigned_to.id)) if data.get('assigned_to') else None
-#             ticket.fault_type = get_object_or_404(FaultType, id=data.get('fault_type', ticket.fault_type.id)) if data.get('fault_type') else None
-#             ticket.region = get_object_or_404(Region, id=data.get('region', ticket.region.id)) if data.get('region') else None
-#             ticket.site_A = get_object_or_404(Site, id=data.get('site_A', ticket.site_A.id)) if data.get('site_A') else None
-#             ticket.site_B = get_object_or_404(Site, id=data.get('site_B', ticket.site_B.id)) if data.get('site_B') else None
-
-#             # Save the updated ticket
-#             ticket.save()
-
-#             return JsonResponse({'message': 'Ticket updated successfully'}, status=200)
-
-#         except Exception as e:
-#             return JsonResponse({'error': str(e)}, status=400)
-
-#     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
-
 
 @csrf_exempt
 def update_tickets(request, ticket_id):
@@ -228,6 +180,7 @@ def add_comment(request, ticket_id):
         ticket = get_object_or_404(Ticket, id=ticket_id)
         content = request.POST.get('content')
         Comment.objects.create(ticket=ticket, user=request.user, content=content)
+     
         return HttpResponseRedirect(reverse('view_ticket', args=[ticket_id]))
 
 
@@ -309,6 +262,7 @@ def create_ticket(request):
                 site_B=site_B,
                 assigned_to=user
             )
+            messages.success(request, "Ticket created successfully.")
             return JsonResponse({'message': 'Ticket created successfully!', 'ticket_id': ticket.id}, status=201)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)

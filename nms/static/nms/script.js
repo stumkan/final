@@ -18,12 +18,62 @@
         document.querySelector('#closed').addEventListener('click', () => load_tickets('closed'));
         document.querySelector('#notes').addEventListener('click', () => load_notes());
         document.querySelector('#create').addEventListener('click', create_ticket);
+        document.querySelector('#create-note').addEventListener('click', create_note);
 
         // By default, load the inbox
         load_tickets('open');
     });
     
-    function create_ticket()  {
+function create_note()  {
+
+      document.querySelector('#title').value = "",
+      document.querySelector('#content').value = "",
+
+
+        // Show the create page and hide other views
+        document.querySelector('#tickets-view').style.display = 'none';
+        document.querySelector('#create-ticket-view').style.display = 'none';
+        document.querySelector('#notes-view').style.display = 'none';
+        document.querySelector('#create-note-view').style.display = 'block';
+    
+        document.getElementById('note-form').addEventListener('submit', async function (event) {
+            event.preventDefault(); 
+    
+            const formData = {
+                title: document.querySelector('#title').value,
+                content: document.querySelector('#content').value,
+            };
+
+            console.log("formData object");
+            console.log(formData);
+            
+             try {
+              // Send data via POST request
+              const response = await fetch('/notes/create/', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token if CSRF protection is enabled
+                  },
+                  body: JSON.stringify(formData),
+              });
+  
+              if (response.ok) {
+                  const data = await response.json();
+
+                  load_notes();
+              } else {
+                  const error = await response.json();
+                  alert('Error: ' + error.error);
+              }
+          } catch (error) {
+              console.error('Error:', error);
+              alert('An error occurred while creating the note.');
+          }
+    
+        });
+    }
+function create_ticket()  {
 
       document.querySelector('#fault_start').value = "",
       document.querySelector('#fault_end').value = "",
@@ -39,6 +89,7 @@
         document.querySelector('#tickets-view').style.display = 'none';
         document.querySelector('#create-ticket-view').style.display = 'block';
         document.querySelector('#notes-view').style.display = 'none';
+        document.querySelector('#create-note-view').style.display = 'none';
     
         document.getElementById('ticket-form').addEventListener('submit', async function (event) {
             event.preventDefault(); 
@@ -101,6 +152,7 @@
         document.querySelector('#tickets-view').style.display = 'none';
         document.querySelector('#create-ticket-view').style.display = 'none';
         document.querySelector('#notes-view').style.display = 'block';
+        document.querySelector('#create-note-view').style.display = 'none';
     
         // Clear the notes view and display the title
         const notesView = document.querySelector('#notes-view');
@@ -159,6 +211,7 @@
     document.querySelector('#tickets-view').style.display = 'block';
     document.querySelector('#create-ticket-view').style.display = 'none';
     document.querySelector('#notes-view').style.display = 'none';
+    document.querySelector('#create-note-view').style.display = 'none';
 
     // Clear the tickets view and display the title
     const ticketsView = document.querySelector('#tickets-view');
@@ -339,9 +392,4 @@ document.getElementById('update-ticket').addEventListener('click', async () => {
 });
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    const backToNotesButton = document.getElementById('back-to-notes');
-    if (backToNotesButton) {
-        backToNotesButton.addEventListener('click', load_notes);
-    }
-});
+
