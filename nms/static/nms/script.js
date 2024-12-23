@@ -23,8 +23,9 @@
         // By default, load the inbox
         load_tickets('open');
     });
-    
-function create_note()  {
+
+    // Create a note 
+    function create_note()  {
 
       document.querySelector('#title').value = "",
       document.querySelector('#content').value = "",
@@ -44,8 +45,6 @@ function create_note()  {
                 content: document.querySelector('#content').value,
             };
 
-            console.log("formData object");
-            console.log(formData);
             
              try {
               // Send data via POST request
@@ -73,17 +72,18 @@ function create_note()  {
     
         });
     }
-function create_ticket()  {
 
-      document.querySelector('#fault_start').value = "",
-      document.querySelector('#fault_end').value = "",
-      document.querySelector('#summary').value = "",
-    //   document.getElementById('resolved').checked = false,
-      document.querySelector('#fault_type').value = "",
-      document.querySelector('#region').value = "",
-      document.querySelector('#site_A').value = "",
-      document.querySelector('#site_B').value = "",
-      document.querySelector('#ticket_status').value = "",
+    // Create a ticket 
+    function create_ticket()  {
+
+        document.querySelector('#fault_start').value = "",
+        document.querySelector('#fault_end').value = "",
+        document.querySelector('#summary').value = "",
+        document.querySelector('#fault_type').value = "",
+        document.querySelector('#region').value = "",
+        document.querySelector('#site_A').value = "",
+        document.querySelector('#site_B').value = "",
+        document.querySelector('#ticket_status').value = "",
 
         // Show the mailbox and hide other views
         document.querySelector('#tickets-view').style.display = 'none';
@@ -106,8 +106,6 @@ function create_ticket()  {
                 ticket_status: document.querySelector('#ticket_status').value,
                
             };
-            console.log("formData object");
-            console.log(formData);
             
              try {
               // Send data via POST request
@@ -137,16 +135,7 @@ function create_ticket()  {
     }
 
     
-    // Function to load individual note detail
-    function load_note_detail(noteId) {
-        fetch(`/notes/${noteId}/`)
-            .then(response => response.text())
-            .then(html => {
-                document.querySelector('#notes-view').innerHTML = html;
-            })
-            .catch(error => console.error('Error loading note detail:', error));
-    }
-    
+    // Load notes 
     function load_notes() {
         // Show the notes view and hide other views
         document.querySelector('#tickets-view').style.display = 'none';
@@ -172,7 +161,6 @@ function create_ticket()  {
     
                 // Clear previous content or loading message
                 notesView.innerHTML = `<h3>My Notes</h3>`; 
-                notesView.innerHTML +=` <a href="notes/create/" class="btn btn-success">Create Note</a> <hr>`; 
     
                 if (notes.length === 0) {
                     // If no notes, display a message
@@ -205,7 +193,7 @@ function create_ticket()  {
             });
     }
     
-    
+// Load tickets  
   function load_tickets(ticket_box) {
     // Show the tickets view and hide other views
     document.querySelector('#tickets-view').style.display = 'block';
@@ -247,7 +235,7 @@ function create_ticket()  {
                         <a href="/tickets/${ticket.id}/details/" class="text-decoration-none">
                             <div class="p-1  border rounded shadow-sm bg-light">
                                 <strong>Ref:</strong> ${ticket.id} | 
-                                <strong>Fault Type:</strong> ${ticket.fault_type} | 
+                                <strong class="fault-type">Fault Type:</strong> ${ticket.fault_type} | 
                                 <strong>Region:</strong> ${ticket.region} | 
                                 <strong>Site A:</strong> ${ticket.site_A}
                                 ${
@@ -255,10 +243,10 @@ function create_ticket()  {
                                         ? `<strong>and Site B:</strong> ${ticket.site_B}`
                                         : ''
                                 }
-                                <span>| <strong>Started:</strong> ${formatDate(ticket.fault_start)}</span>
+                                <span class="fault-start">| <strong>Started:</strong> ${formatDate(ticket.fault_start)}</span>
                                 ${
                                     ticket.fault_end
-                                        ? `<span> | <strong>Ended:</strong> ${formatDate(ticket.fault_end)}</span>`
+                                        ? `<span class="fault-end"> | <strong>Ended:</strong> ${formatDate(ticket.fault_end)}</span>`
                                         : ''
                                 }
                             </div>
@@ -275,82 +263,8 @@ function create_ticket()  {
         });
 }
 
-function view_ticket2(ticket_id) {
 
-  // Fetch ticket details
-  fetch(`/tickets/${ticket_id}`)
-      .then(response => {
-          if (!response.ok) {
-              throw new Error("Failed to fetch ticket details");
-          }
-          return response.json();
-      })
-      .then(ticket => {
-          const detailView = document.querySelector('#ticket-detail-view');
-          detailView.innerHTML = `
-              <h3>Ticket Details</h3>
-              <p><strong>Fault Type:</strong> ${ticket.fault_type || 'N/A'}</p>
-              <p><strong>Region:</strong> ${ticket.region || 'N/A'}</p>
-              <p><strong>Site A:</strong> ${ticket.site_A || 'N/A'}</p>
-              <p><strong>Site B:</strong> ${ticket.site_B || 'N/A'}</p>
-              <p><strong>Status:</strong> ${ticket.status}</p>
-              <p><strong>Fault Start:</strong> ${ticket.fault_start}</p>
-              <p><strong>Fault End:</strong> ${ticket.fault_end || 'Ongoing'}</p>
-              <p><strong>Summary:</strong> ${ticket.summary || 'No summary provided'}</p>
-
-              <h4>Comments</h4>
-              <div id="comments">
-                  ${ticket.comments.map(comment => `
-                      <div class="comment">
-                          <p><strong>${comment.user__username}:</strong> ${comment.content}</p>
-                          <p class="text-muted">${new Date(comment.created_date).toLocaleString()}</p>
-                      </div>
-                  `).join('')}
-              </div>
-
-              <textarea id="new-comment" placeholder="Add a comment" rows="3"></textarea>
-              <button id="add-comment-btn" class="btn btn-primary">Add Comment</button>
-          `;
-
-          // Add event listener for adding a comment
-          document.querySelector('#add-comment-btn').addEventListener('click', () => {
-              const content = document.querySelector('#new-comment').value;
-              if (content.trim() === "") {
-                  alert("Comment cannot be empty!");
-                  return;
-              }
-
-              fetch(`/tickets/${ticketId}/`, {
-                  method: "POST",
-                  headers: {
-                      "Content-Type": "application/json",
-                      "X-CSRFToken": getCookie('csrftoken'),
-                  },
-                  body: JSON.stringify({ content }),
-              })
-                  .then(response => {
-                      if (!response.ok) {
-                          throw new Error("Failed to add comment");
-                      }
-                      return response.json();
-                  })
-                  .then(data => {
-                      alert(data.message);
-                      view_ticket(ticketId); // Refresh ticket view
-                  })
-                  .catch(error => {
-                      console.error("Error adding comment:", error);
-                      alert("Could not add comment. Please try again later.");
-                  });
-          });
-      })
-      .catch(error => {
-          console.error("Error loading ticket details:", error);
-          document.querySelector('#ticket-detail-view').innerHTML = `<p class="error">Could not load ticket details. Please try again later.</p>`;
-      });
-}
-
-
+// Update the ticket info 
 document.getElementById('update-ticket').addEventListener('click', async () => {
 
     const ticket_id = parseInt(document.getElementById('ticket-container').value, 10);

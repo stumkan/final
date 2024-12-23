@@ -23,8 +23,8 @@
 
 .ticket{
     background-color: lightgrey;
-    padding: .5rem;
-    margin-top: .5rem;
+    padding: .2rem;
+    margin-top: .2rem;
     border-radius: 5px;
     cursor: pointer;
 }
@@ -36,6 +36,20 @@
 .ticket-item:active, .ticket-item:visited{
     text-decoration: none;
 }
+
+.fault-start{
+    color: #cf201d;
+}
+
+.fault-end{    
+    color: #32d532;
+}
+
+.fault-type{    
+    color: #121312;
+}
+
+
 
 .comment{
     background-color: rgb(240, 240, 233);
