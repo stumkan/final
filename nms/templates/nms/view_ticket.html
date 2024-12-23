@@ -4,6 +4,9 @@
 
 <div class="container mt-5">
     <h1 class="mb-4">Ticket Details</h1>
+
+    <h3 class="mb-4">Ref:{{ ticket.id }}</h3>
+
     
     <form id="edit-ticket-form" class="row g-3" action="{% url 'update_ticket' ticket.id %}">
         <div class="col-md-6">

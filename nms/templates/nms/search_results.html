@@ -1,0 +1,37 @@
+{% extends "nms/layout.html" %}
+
+{% block body %}
+<h1>Search Results</h1>
+
+<p>Search query: "{{ query }}"</p>
+
+{% if tickets %}
+    <ul>
+        {% for ticket in tickets %}
+            <!-- <li>
+                <a href="/tickets/{{ ticket.id }}/details/">
+                    Ref: {{ ticket.id }} | Fault Type: {{ ticket.fault_type.name }} | 
+                    Region: {{ ticket.region.name }} | 
+                    Site A: {{ ticket.site_A.name }}{% if ticket.site_B %} and Site B: {{ ticket.site_B.name }}{% endif %}
+                </a>
+            </li> -->
+
+            <li class="links">
+                <a href="/tickets/{{ ticket.id }}/details/" class="text-decoration-none">
+                    <div class="p-3 mb-2 border rounded shadow-sm bg-light">
+                        <strong>Ref:</strong> {{ ticket.id }} | 
+                        <strong>Fault Type:</strong> {{ ticket.fault_type.name }} | 
+                        <strong>Region:</strong> {{ ticket.region.name }} | 
+                        <strong>Site A:</strong> {{ ticket.site_A.name }}
+                        {% if ticket.site_B %}
+                            <strong>and Site B:</strong> {{ ticket.site_B.name }}
+                        {% endif %}
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No matching tickets found.</p>
+{% endif %}
+{% endblock %}

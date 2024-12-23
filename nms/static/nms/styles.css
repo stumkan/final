@@ -1,3 +1,20 @@
+
+/* links styles */
+
+.links{
+    list-style-type: none;
+}
+
+
+/* menu styling  */
+
+.main-menu{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
 /* Notes styling */
 
 

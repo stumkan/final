@@ -129,20 +129,21 @@
                     notes.forEach(note => {
     
                         // Create a note element
+
                         const noteElement = document.createElement('div');
-                        noteElement.classList.add('note', 'mb-3', 'p-3', 'border', 'rounded');
+                        noteElement.classList.add('note', 'mb-3', 'p-3', 'border', 'rounded', 'shadow-sm', 'bg-light');
                         noteElement.innerHTML = `
-                            <br>
-                            <a href="/notes/${note.id}/details/" class="note-link" style="text-decoration: none; color: inherit;">
+                            <a href="/notes/${note.id}/details/" class="note-link" style="text-decoration: none; color: inherit; display: block;">
                                 <div class="note-item">
                                     <span><strong>Ref:</strong> ${note.id} | </span>
                                     <span><strong>Title:</strong> ${note.title}</span>
                                 </div>
                             </a>
                         `;
-    
+
                         // Append the note element to the view
                         notesView.appendChild(noteElement);
+
                     });
                 }
             })
@@ -187,34 +188,31 @@
                         timeStyle: 'short',
                     }).format(new Date(date));
 
-                    // Create a ticket element and append it to the view
                     const ticketElement = document.createElement('div');
                     ticketElement.classList.add('ticket');
                     ticketElement.innerHTML = `
-                    <a href="/tickets/${ticket.id}/details/" class="ticket-link">
-                        <div class="ticket-item">
-                            <span>Ref:${ticket.id} |</span>
-                            <span>${ticket.fault_type}</span>
-                            <span> in the ${ticket.region} Region </span>
-                            <span>between ${ticket.site_A}</span>
-                            ${
-                                ticket.site_B
-                                    ? `<span>and ${ticket.site_B} </span>`
-                                    : ''
-                            }
-                            <span>| Started: ${formatDate(ticket.fault_start)}</span>
-                            ${
-                                ticket.fault_end
-                                    ? `<span>Ended: ${formatDate(ticket.fault_end)}: </span>`
-                                    : ''
-                            }          
-                        </div>
-                         </a>
-                        `;
-
-                    // Add a click event to view the email
-                    // ticketElement.addEventListener('click', () => view_ticket(ticket.id)); 
+                        <a href="/tickets/${ticket.id}/details/" class="text-decoration-none">
+                            <div class="p-1  border rounded shadow-sm bg-light">
+                                <strong>Ref:</strong> ${ticket.id} | 
+                                <strong>Fault Type:</strong> ${ticket.fault_type} | 
+                                <strong>Region:</strong> ${ticket.region} | 
+                                <strong>Site A:</strong> ${ticket.site_A}
+                                ${
+                                    ticket.site_B
+                                        ? `<strong>and Site B:</strong> ${ticket.site_B}`
+                                        : ''
+                                }
+                                <span>| <strong>Started:</strong> ${formatDate(ticket.fault_start)}</span>
+                                ${
+                                    ticket.fault_end
+                                        ? `<span> | <strong>Ended:</strong> ${formatDate(ticket.fault_end)}</span>`
+                                        : ''
+                                }
+                            </div>
+                        </a>
+                    `;
                     ticketsView.appendChild(ticketElement);
+
                 });
             }
         })
@@ -317,6 +315,8 @@ document.getElementById('update-ticket').addEventListener('click', async () => {
         site_B: document.getElementById('site_B').value,
     };
 
+    console.log(ticketData);
+
     try {
         const response = await fetch(`/tickets/${ticket_id}/update/`, {
             method: 'POST',
@@ -339,3 +339,9 @@ document.getElementById('update-ticket').addEventListener('click', async () => {
 });
 
 
+document.addEventListener('DOMContentLoaded', () => {
+    const backToNotesButton = document.getElementById('back-to-notes');
+    if (backToNotesButton) {
+        backToNotesButton.addEventListener('click', load_notes);
+    }
+});

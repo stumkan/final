@@ -104,5 +104,6 @@ class Note(models.Model):
                 "id": self.id,
                 "title": self.title,
                 "content": self.content,
+                "created_at": self.created_at,
 
             }

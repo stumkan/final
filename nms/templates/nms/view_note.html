@@ -9,16 +9,14 @@
  
     <span>Written on {{ note.created_at }}</span>
     <hr>
-    <a href="{% url 'edit_note' note.id %}">Edit note</a> 
+    <a href="{% url 'edit_note' note.id %}" class="btn btn-success">Edit note</a> 
    
     <h2>{{ note.title }}</h2>
     <div>
         {{ rendered_content|safe }}
     </div>
 </div>
-<button id="back-to-notes" class="btn btn-secondary">Back to Notes</button>
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-<script>hljs.highlightAll();</script> -->
+<a class="btn btn-success">Back to Notes</a> 
 
 
 {% endblock %}

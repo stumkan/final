@@ -21,6 +21,28 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
+from django.db.models import Q
+
+
+def search_tickets(request):
+    query = request.GET.get('q', '').strip()
+    tickets = Ticket.objects.all()
+
+    if query.isdigit():  # If the input is numeric, search by fault_ref
+        tickets = tickets.filter(id=query)  # Assuming 'id' is used as the fault reference
+    else:  # If the input contains text
+        tickets = tickets.filter(
+            Q(fault_type__name__icontains=query) |  # Searching in fault_type (assuming FaultType has a 'name' field)
+            Q(region__name__icontains=query) |  # Searching in region (assuming Region has a 'name' field)
+            Q(site_A__name__icontains=query) |  # Searching in site_A (assuming Site has a 'name' field)
+            Q(site_B__name__icontains=query) |  # Searching in site_B (assuming Site has a 'name' field)
+            Q(assigned_to__username__icontains=query)  # Searching in assigned_to (username of User model)
+        )
+
+    return render(request, 'nms/search_results.html', {'tickets': tickets, 'query': query})
+
+
+
 @login_required
 def edit_note(request, note_id):
     note = get_object_or_404(Note, id=note_id, user=request.user)
@@ -76,6 +98,12 @@ def view_note(request, note_id):
     rendered_content = md(note.content, extensions=['extra', 'codehilite'])  # Render Markdown
     return render(request, 'nms/view_note.html', {'note': note, 'rendered_content': rendered_content})
 
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
+import json
+
 @csrf_exempt
 def update_ticket(request, ticket_id):
     if request.method == "POST":
@@ -90,12 +118,31 @@ def update_ticket(request, ticket_id):
             ticket.fault_start = data.get('fault_start', ticket.fault_start)
             ticket.fault_end = data.get('fault_end', ticket.fault_end)
             ticket.summary = data.get('summary', ticket.summary)
-            ticket.status = get_object_or_404(TicketStatus, id=data.get('status', ticket.status.id))
-            ticket.assigned_to = get_object_or_404(User, id=data.get('assigned_to', ticket.assigned_to.id)) if data.get('assigned_to') else None
-            ticket.fault_type = get_object_or_404(FaultType, id=data.get('fault_type', ticket.fault_type.id)) if data.get('fault_type') else None
-            ticket.region = get_object_or_404(Region, id=data.get('region', ticket.region.id)) if data.get('region') else None
-            ticket.site_A = get_object_or_404(Site, id=data.get('site_A', ticket.site_A.id)) if data.get('site_A') else None
-            ticket.site_B = get_object_or_404(Site, id=data.get('site_B', ticket.site_B.id)) if data.get('site_B') else None
+
+            # Handle status
+            status_id = data.get('status')
+            if status_id:
+                ticket.status = get_object_or_404(TicketStatus, id=status_id)
+
+            # Handle assigned_to
+            assigned_to_id = data.get('assigned_to')
+            ticket.assigned_to = get_object_or_404(User, id=assigned_to_id) if assigned_to_id else None
+
+            # Handle fault_type
+            fault_type_id = data.get('fault_type')
+            ticket.fault_type = get_object_or_404(FaultType, id=fault_type_id) if fault_type_id else None
+
+            # Handle region
+            region_id = data.get('region')
+            ticket.region = get_object_or_404(Region, id=region_id) if region_id else None
+
+            # Handle site_A
+            site_A_id = data.get('site_A')
+            ticket.site_A = get_object_or_404(Site, id=site_A_id) if site_A_id else None
+
+            # Handle site_B
+            site_B_id = data.get('site_B')
+            ticket.site_B = get_object_or_404(Site, id=site_B_id) if site_B_id else None
 
             # Save the updated ticket
             ticket.save()
@@ -106,6 +153,49 @@ def update_ticket(request, ticket_id):
             return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+# @csrf_exempt
+# def update_ticket(request, ticket_id):
+#     if request.method == "POST":
+#         try:
+#             # Parse JSON data from the request body
+#             data = json.loads(request.body)
+
+#             # Retrieve the ticket to update
+#             ticket = get_object_or_404(Ticket, id=ticket_id)
+
+#             # print("print ticket")
+#             # print(ticket.id)
+#             # print(ticket.fault_start)
+#             # print(ticket.fault_end)
+#             # print(ticket.summary)
+#             # print(ticket.status)
+#             # print(ticket.assigned_to)
+#             # print(ticket.fault_type)
+#             # print(ticket.region)
+#             # print(ticket.site_A)
+#             # print(ticket.site_B)
+
+#             # Update fields with the provided data
+#             ticket.fault_start = data.get('fault_start', ticket.fault_start)
+#             ticket.fault_end = data.get('fault_end', ticket.fault_end)
+#             ticket.summary = data.get('summary', ticket.summary)
+#             ticket.status = get_object_or_404(TicketStatus, id=data.get('status', ticket.status.id))
+#             ticket.assigned_to = get_object_or_404(User, id=data.get('assigned_to', ticket.assigned_to.id)) if data.get('assigned_to') else None
+#             ticket.fault_type = get_object_or_404(FaultType, id=data.get('fault_type', ticket.fault_type.id)) if data.get('fault_type') else None
+#             ticket.region = get_object_or_404(Region, id=data.get('region', ticket.region.id)) if data.get('region') else None
+#             ticket.site_A = get_object_or_404(Site, id=data.get('site_A', ticket.site_A.id)) if data.get('site_A') else None
+#             ticket.site_B = get_object_or_404(Site, id=data.get('site_B', ticket.site_B.id)) if data.get('site_B') else None
+
+#             # Save the updated ticket
+#             ticket.save()
+
+#             return JsonResponse({'message': 'Ticket updated successfully'}, status=200)
+
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=400)
+
+#     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 
 @csrf_exempt
