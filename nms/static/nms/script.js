@@ -1,3 +1,91 @@
+// Adding pagination ---------------------------------------------------------------------------
+
+let currentPage = 1; // Tracks the current page
+let loading = false; // Prevents duplicate requests
+let hasNextPage = true; // Checks if there are more pages
+let currentTicketBox = "open"; // Default ticket box
+
+function load_tickets(ticket_box) {
+    currentPage = 1; // Reset page
+    hasNextPage = true; // Reset pagination flag
+    currentTicketBox = ticket_box; // Set current ticket box
+
+    document.querySelector('#tickets-view').style.display = 'block';
+    document.querySelector('#create-ticket-view').style.display = 'none';
+    document.querySelector('#notes-view').style.display = 'none';
+    document.querySelector('#create-note-view').style.display = 'none';
+    
+    fetchTickets(ticket_box, currentPage); // Load first page
+}
+
+function fetchTickets(ticket_box, page) {
+    if (loading || !hasNextPage) return; // Prevent duplicate requests
+    loading = true;
+
+    fetch(`/tickets/${ticket_box}/?page=${page}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const ticketsView = document.querySelector('#tickets-view');
+
+            // Append tickets to the view
+            data.tickets.forEach(ticket => {
+                const formatDate = date => new Intl.DateTimeFormat('en-US', {
+                    dateStyle: 'short',
+                    timeStyle: 'short',
+                }).format(new Date(date));
+
+                const ticketElement = document.createElement('div');
+                ticketElement.classList.add('ticket');
+                ticketElement.innerHTML = `
+                    <a href="/tickets/${ticket.id}/details/" class="text-decoration-none">
+                        <div class="p-1 border rounded shadow-sm bg-light">
+                            <strong>Ref:</strong> ${ticket.id} | 
+                            <strong class="fault-type">Fault Type:</strong> ${ticket.fault_type} | 
+                            <strong>Region:</strong> ${ticket.region} | 
+                            <strong>Site A:</strong> ${ticket.site_A}
+                            ${
+                                ticket.site_B
+                                    ? `<strong>and Site B:</strong> ${ticket.site_B}`
+                                    : ''
+                            }
+                            <span class="fault-start">| <strong>Started:</strong> ${formatDate(ticket.fault_start)}</span>
+                            ${
+                                ticket.fault_end
+                                    ? `<span class="fault-end"> | <strong>Ended:</strong> ${formatDate(ticket.fault_end)}</span>`
+                                    : ''
+                            }
+                        </div>
+                    </a>
+                `;
+                ticketsView.appendChild(ticketElement);
+            });
+
+            // Update pagination state
+            hasNextPage = data.has_next;
+            currentPage++;
+            loading = false;
+        })
+        .catch(error => {
+            console.error("Error loading tickets:", error);
+        });
+}
+
+// Infinite scrolling listener
+window.addEventListener('scroll', () => {
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const bottomPosition = document.body.offsetHeight - 100;
+
+    if (scrollPosition >= bottomPosition) {
+        fetchTickets(currentTicketBox, currentPage);
+    }
+});
+
+// Adding pagination ---------------------------------------------------------------------------
 
     // Wait for the DOM to load
     document.addEventListener('DOMContentLoaded', function() {
@@ -194,73 +282,73 @@
     }
     
 // Load tickets  
-  function load_tickets(ticket_box) {
-    // Show the tickets view and hide other views
-    document.querySelector('#tickets-view').style.display = 'block';
-    document.querySelector('#create-ticket-view').style.display = 'none';
-    document.querySelector('#notes-view').style.display = 'none';
-    document.querySelector('#create-note-view').style.display = 'none';
+//   function load_tickets(ticket_box) {
+//     // Show the tickets view and hide other views
+//     document.querySelector('#tickets-view').style.display = 'block';
+//     document.querySelector('#create-ticket-view').style.display = 'none';
+//     document.querySelector('#notes-view').style.display = 'none';
+//     document.querySelector('#create-note-view').style.display = 'none';
 
-    // Clear the tickets view and display the title
-    const ticketsView = document.querySelector('#tickets-view');
-    ticketsView.innerHTML = `<h3>${ticket_box.charAt(0).toUpperCase() + ticket_box.slice(1)} Tickets</h3>`;
-    ticketsView.innerHTML += `<p>Loading tickets...</p>`; // Loading message
+//     // Clear the tickets view and display the title
+//     const ticketsView = document.querySelector('#tickets-view');
+//     ticketsView.innerHTML = `<h3>${ticket_box.charAt(0).toUpperCase() + ticket_box.slice(1)} Tickets</h3>`;
+//     ticketsView.innerHTML += `<p>Loading tickets...</p>`; // Loading message
 
-    // Fetch tickets from the API
-    fetch(`/tickets/${ticket_box}/`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Error: ${response.status} ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            ticketsView.innerHTML = ''; // Clear loading message
-            const tickets = data.tickets;
+//     // Fetch tickets from the API
+//     fetch(`/tickets/${ticket_box}/`)
+//         .then(response => {
+//             if (!response.ok) {
+//                 throw new Error(`Error: ${response.status} ${response.statusText}`);
+//             }
+//             return response.json();
+//         })
+//         .then(data => {
+//             ticketsView.innerHTML = ''; // Clear loading message
+//             const tickets = data.tickets;
 
 
-            if (tickets.length === 0) {
-                ticketsView.innerHTML += `<p>No ${ticketbox} tickets available.</p>`;
-            } else {
-                tickets.forEach(ticket => {
-                    // Format dates
-                    const formatDate = date => new Intl.DateTimeFormat('en-US', {
-                        dateStyle: 'short',
-                        timeStyle: 'short',
-                    }).format(new Date(date));
+//             if (tickets.length === 0) {
+//                 ticketsView.innerHTML += `<p>No ${ticketbox} tickets available.</p>`;
+//             } else {
+//                 tickets.forEach(ticket => {
+//                     // Format dates
+//                     const formatDate = date => new Intl.DateTimeFormat('en-US', {
+//                         dateStyle: 'short',
+//                         timeStyle: 'short',
+//                     }).format(new Date(date));
 
-                    const ticketElement = document.createElement('div');
-                    ticketElement.classList.add('ticket');
-                    ticketElement.innerHTML = `
-                        <a href="/tickets/${ticket.id}/details/" class="text-decoration-none">
-                            <div class="p-1  border rounded shadow-sm bg-light">
-                                <strong>Ref:</strong> ${ticket.id} | 
-                                <strong class="fault-type">Fault Type:</strong> ${ticket.fault_type} | 
-                                <strong>Region:</strong> ${ticket.region} | 
-                                <strong>Site A:</strong> ${ticket.site_A}
-                                ${
-                                    ticket.site_B
-                                        ? `<strong>and Site B:</strong> ${ticket.site_B}`
-                                        : ''
-                                }
-                                <span class="fault-start">| <strong>Started:</strong> ${formatDate(ticket.fault_start)}</span>
-                                ${
-                                    ticket.fault_end
-                                        ? `<span class="fault-end"> | <strong>Ended:</strong> ${formatDate(ticket.fault_end)}</span>`
-                                        : ''
-                                }
-                            </div>
-                        </a>
-                    `;
-                    ticketsView.appendChild(ticketElement);
-                });
-            }
-        })
-        .catch(error => {
-            console.error("Error loading tickets:", error);
-            ticketsView.innerHTML = `<p class="error">Could not load ${ticket_box} tickets. Please try again later.</p>`;
-        });
-}
+//                     const ticketElement = document.createElement('div');
+//                     ticketElement.classList.add('ticket');
+//                     ticketElement.innerHTML = `
+//                         <a href="/tickets/${ticket.id}/details/" class="text-decoration-none">
+//                             <div class="p-1  border rounded shadow-sm bg-light">
+//                                 <strong>Ref:</strong> ${ticket.id} | 
+//                                 <strong class="fault-type">Fault Type:</strong> ${ticket.fault_type} | 
+//                                 <strong>Region:</strong> ${ticket.region} | 
+//                                 <strong>Site A:</strong> ${ticket.site_A}
+//                                 ${
+//                                     ticket.site_B
+//                                         ? `<strong>and Site B:</strong> ${ticket.site_B}`
+//                                         : ''
+//                                 }
+//                                 <span class="fault-start">| <strong>Started:</strong> ${formatDate(ticket.fault_start)}</span>
+//                                 ${
+//                                     ticket.fault_end
+//                                         ? `<span class="fault-end"> | <strong>Ended:</strong> ${formatDate(ticket.fault_end)}</span>`
+//                                         : ''
+//                                 }
+//                             </div>
+//                         </a>
+//                     `;
+//                     ticketsView.appendChild(ticketElement);
+//                 });
+//             }
+//         })
+//         .catch(error => {
+//             console.error("Error loading tickets:", error);
+//             ticketsView.innerHTML = `<p class="error">Could not load ${ticket_box} tickets. Please try again later.</p>`;
+//         });
+// }
 
 
 // Update the ticket info 
@@ -303,6 +391,7 @@ document.getElementById('update-ticket').addEventListener('click', async () => {
         alert('An unexpected error occurred.');
     }
 });
+
 
 
 

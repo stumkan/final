@@ -23,6 +23,48 @@ from django.contrib.auth.decorators import login_required
 
 from django.db.models import Q
 
+from django.core.paginator import Paginator
+
+
+def tickets(request, ticket_box):
+
+        # Filter emails returned based on mailbox
+    if ticket_box == "open":
+        tickets = Ticket.objects.filter(status__name__in=['active', 'outstanding', 'canceled']).order_by('-created_at')
+
+    elif ticket_box == "closed":
+        tickets = Ticket.objects.filter(status__name__in=['closed']).order_by('-created_at')
+
+    else:
+        return JsonResponse({"error": "Invalid ticketbox."}, status=400)
+
+
+        
+
+    # # Filter tickets based on the provided ticket_box
+    # tickets = Ticket.objects.filter(status__name=ticket_box).order_by('-created_at')
+    
+    # Get the page number from query parameters, default to 1
+    page = request.GET.get('page', 1)
+    
+    # Paginate tickets with 10 items per page
+    paginator = Paginator(tickets, 10)
+    
+    try:
+        tickets_page = paginator.page(page)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    
+    # Serialize tickets data
+    tickets_data = [ticket.serialize() for ticket in tickets_page]
+
+    # Return paginated data and metadata for frontend
+    return JsonResponse({
+        'tickets': tickets_data,
+        'has_next': tickets_page.has_next(),
+        'current_page': tickets_page.number,
+    })
+
 
 def search_tickets(request):
     query = request.GET.get('q', '').strip()
