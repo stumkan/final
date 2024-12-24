@@ -42,7 +42,6 @@ def search_tickets(request):
     return render(request, 'nms/search_results.html', {'tickets': tickets, 'query': query})
 
 
-
 @login_required
 def edit_note(request, note_id):
     note = get_object_or_404(Note, id=note_id, user=request.user)

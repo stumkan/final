@@ -253,7 +253,6 @@
                         </a>
                     `;
                     ticketsView.appendChild(ticketElement);
-
                 });
             }
         })
@@ -304,6 +303,7 @@ document.getElementById('update-ticket').addEventListener('click', async () => {
         alert('An unexpected error occurred.');
     }
 });
+
 
 
 
